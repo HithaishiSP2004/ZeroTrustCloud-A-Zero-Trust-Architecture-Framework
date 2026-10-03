@@ -111,7 +111,7 @@ Modern cloud-native environments face acute security challenges that perimeter f
 
 ## 7. Research & Methodology
 
-The project is grounded in a two-phase literature study surveying 20 peer-reviewed research papers:
+The project is grounded in a two-phase literature study surveying 20 research papers and technical publications:
 * **Phase I Review (10 Papers):** Workload identity federation, OIDC token binding, mTLS benchmarking, and supply chain integrity.
 * **Phase II Review (10 Papers):** Secretless inter-application identities, service mesh control plane verification, Intel SGX enclaves, Kubernetes network misconfigurations, and dynamic risk-based access control (DR-TBAC).
 * **Week 4 Blueprint:** Detailed methodology formalization, STRIDE threat modeling, telemetry schema definition, and controlled experimental matrix.
@@ -167,7 +167,7 @@ ZeroTrustCloud-A-Zero-Trust-Architecture-Framework/
 ├── identity-engine/          [Planned: Phase 4 — SPIRE attestation & OIDC federation manifests]
 ├── policy-engine/            [Planned: Phase 4 — OPA Gatekeeper constraints & Rego policies]
 ├── service-mesh/             [Planned: Phase 4 — Istio STRICT mTLS & Layer-7 AuthZ policies]
-├── continuous-verification/  [Planned: Phase 5 — Dynamic trust score daemon & drift detectors]
+├── continuous-verification/  [Planned: Phase 5 — Runtime verification & drift detectors]
 ├── supply-chain-security/    [Planned: Phase 5 — Cosign signature webhooks & SBOM generators]
 ├── observability/            [Planned: Phase 6 — Prometheus telemetry configs & Grafana dashboards]
 │
