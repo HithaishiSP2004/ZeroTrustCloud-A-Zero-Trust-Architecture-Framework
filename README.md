@@ -1,6 +1,8 @@
 # ZeroTrustCloud: Implementing and Automating Identity-Centric Zero-Trust Architecture for Cloud-Native Environments
 
-> 📋 **Current Status: Research & Methodology / Experimental Planning (Week 4)**
+> 📋 **Current Status: Phase 1 — Dashboard Foundation Implemented & Verified**
+> 
+> *Phase 1 delivers the TrustMesh Security Command Center dashboard application shell, interactive findings explorer, threat context drawers, and honest integration state indicators. In accordance with `PROJECT_CORE.md`, all displayed telemetry records are controlled demonstration fixtures.*
 
 **ZeroTrustCloud** (proposed platform name: **TrustMesh**) is a final-year MCA cybersecurity engineering project exploring the design, automated policy governance, and empirical evaluation of an **Identity-Centric Zero-Trust Architecture (ZTA)** tailored specifically for containerized, multi-cloud Kubernetes environments (AWS EKS & Azure AKS).
 
@@ -85,14 +87,41 @@ Modern cloud-native environments face acute security challenges that perimeter f
 
 ---
 
-## 5. Core System Modules (Planned Implementation Stages)
+## 5. Core System Modules & Phase 1 Status
 
-* **Identity Engine [Planned]:** Cryptographic workload identity attestation via SPIRE and secretless cloud OIDC federation.
-* **Policy Engine [Planned]:** Declarative Policy-as-Code admission webhooks using OPA Gatekeeper and Rego rules.
-* **Service Trust Engine [Planned]:** Istio Service Mesh enforcing strict mTLS and Layer-7 authorization policies.
-* **Continuous Verification Engine [Planned]:** Runtime daemon tracking configuration drift and computing dynamic trust scores.
-* **Pipeline Security Engine [Planned]:** Secretless GitHub Actions runners, Trivy scanning, and Cosign image signing enforced at admission.
-* **Observability & Compliance Engine [Planned]:** Centralized aggregation of audit telemetry, policy violations, and security health metrics.
+* **Command Center Dashboard [Implemented — Phase 1]:** Maintainable application shell, navigation system, dynamic posture metrics, interactive findings explorer with multi-column sorting, free-text search, multi-factor filtering, slide-over threat context drawer with attack paths and Rego remediation, and honest integration state indicators.
+* **Identity Engine [Planned — Phase 4]:** Cryptographic workload identity attestation via SPIRE and secretless cloud OIDC federation.
+* **Policy Engine [Planned — Phase 4]:** Declarative Policy-as-Code admission webhooks using OPA Gatekeeper and Rego rules.
+* **Service Trust Engine [Planned — Phase 4]:** Istio Service Mesh enforcing strict mTLS and Layer-7 authorization policies.
+* **Continuous Verification Engine [Planned — Phase 5]:** Runtime daemon tracking configuration drift and computing dynamic trust scores.
+* **Pipeline Security Engine [Planned — Phase 5]:** Secretless GitHub Actions runners, Trivy scanning, and Cosign image signing enforced at admission.
+* **Observability & Compliance Engine [Planned — Phase 6]:** Centralized aggregation of audit telemetry, policy violations, and security health metrics.
+
+### 5.1 Phase 1 Local Execution & Verification
+
+The Phase 1 dashboard foundation is built using React 18, TypeScript, and Vite with a custom high-density dark-navy enterprise security design system.
+
+```bash
+# 1. Install dependencies
+npm install
+
+# 2. Build for production (typecheck & bundle)
+npm run build
+
+# 3. Launch local preview server (port 3000)
+npm run preview
+# OR start Vite development server
+npm run dev
+```
+
+#### Verified Phase 1 Capabilities:
+* **Honest Data Tagging:** Prominent indicator declaring `[SIMULATED TESTBED]` across all screens; zero fabricated live cloud connections.
+* **Security Command Center:** 2.5D Isometric Telemetry space tracking evaluated workloads, active breaches, severity distribution chips, and a floating top-priority incident card with 1-click inspection.
+* **Progressive Disclosure Architecture:** Dedicated Findings Explorer workspace featuring live free-text search (CVE, title, pod name, namespace), multi-factor dropdown filters (Severity, Architecture Pillar, Status), and multi-column sorting.
+* **Threat Lineage Drawer:** Slide-over detail drawer featuring threat impact analysis, 4-step attack path graphs, CIS/NIST remediation guidance, and syntax-highlighted Rego constraint snippets.
+* **Session Triage Updates:** Real-time local state triage toggling (New, In Progress, Resolved) updating table badges and metric counters instantly.
+* **Planned Integrations Modal:** Transparent connector inspection dialog displaying planned status for AWS EKS, Azure AKS, Istio, OPA Gatekeeper, SPIRE, and Cosign.
+* **Module Shell Navigation:** Clean routes for upcoming engines with architectural blueprints and return buttons.
 
 ---
 
@@ -144,6 +173,18 @@ System validation will be conducted through controlled security experiments comp
 ZeroTrustCloud-A-Zero-Trust-Architecture-Framework/
 │
 ├── README.md                                          [Project overview, status, and roadmap]
+├── PROJECT_CORE.md                                    [TrustMesh Core Constitution & Scope Boundary]
+├── AGENTS.md                                          [Instructions & rules for coding agents]
+├── index.html, vite.config.ts, tsconfig.json          [Frontend application configuration]
+├── package.json, package-lock.json                    [Dashboard dependencies & scripts]
+│
+├── src/                                               [TrustMesh Phase 1 Dashboard Application]
+│   ├── components/                                    [Header, Sidebar, CommandCenter, FindingsTable, Drawers]
+│   ├── data/                                          [Controlled demonstration security findings & provider data]
+│   ├── styles/                                        [Custom enterprise design token CSS]
+│   ├── types/                                         [Domain TypeScript interfaces]
+│   ├── App.tsx                                        [Application shell coordinator]
+│   └── main.tsx                                       [React DOM entrypoint]
 │
 ├── Plannings/                                         [Project work plans & methodology]
 │   ├── Work_Plan_and_Project_Progress_Report_ZeroTrustCloud.pdf
