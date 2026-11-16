@@ -52,7 +52,7 @@ export const TrustArchitectureView: React.FC<TrustArchitectureViewProps> = ({
     setSyncNotice(null);
     setTimeout(() => {
       setIsSyncing(false);
-      setSyncNotice('SPIRE Server & Istio control plane synchronized. SVIDs auto-rotated; STRICT mTLS active.');
+      setSyncNotice('Standalone evaluation: SPIRE SVID inventory & Istio STRICT mTLS baseline verified.');
       setTimeout(() => setSyncNotice(null), 4000);
     }, 700);
   };

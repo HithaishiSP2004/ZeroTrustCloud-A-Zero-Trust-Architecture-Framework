@@ -34,15 +34,7 @@ export const IdentityAccessView: React.FC<IdentityAccessViewProps> = ({
     setIsDrawerOpen(true);
   };
 
-  const handleSyncCluster = () => {
-    setIsSyncing(true);
-    setSyncNotice(null);
-    setTimeout(() => {
-      setIsSyncing(false);
-      setSyncNotice('Manifests synchronized with local Kubernetes testbed (12 workloads verified).');
-      setTimeout(() => setSyncNotice(null), 5000);
-    }, 800);
-  };
+  const handleSyncCluster = () => { setSyncNotice('No cluster connected. These workloads are illustrative fixtures.'); };
 
   return (
     <div className="identity-access-view-container">
@@ -56,7 +48,7 @@ export const IdentityAccessView: React.FC<IdentityAccessViewProps> = ({
             <h1 className="domain-page-title">Workload Identity & Service Accounts</h1>
             <span className="domain-live-badge identity">
               <span className="live-pip cyan" />
-              K8s Testbed Active
+              DEMO INVENTORY
             </span>
           </div>
           <div className="domain-meta-subrow">
@@ -69,7 +61,7 @@ export const IdentityAccessView: React.FC<IdentityAccessViewProps> = ({
             </span>
             <span className="domain-meta-sep">•</span>
             <span className="domain-meta-crumb">
-              Inventory: <strong>12 Workloads Introspected</strong>
+              Inventory: <strong>Illustrative workloads</strong>
             </span>
           </div>
         </div>
@@ -82,7 +74,7 @@ export const IdentityAccessView: React.FC<IdentityAccessViewProps> = ({
             title="Reload workload state from manifests or live cluster"
           >
             <RefreshCw size={13} className={isSyncing ? 'spin-icon' : ''} />
-            <span>{isSyncing ? 'Introspecting...' : 'Sync Manifests'}</span>
+            <span>{isSyncing ? 'Introspecting...' : 'Connection status'}</span>
           </button>
         </div>
       </div>

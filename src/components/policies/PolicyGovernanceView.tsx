@@ -51,7 +51,7 @@ export const PolicyGovernanceView: React.FC<PolicyGovernanceViewProps> = ({
     setSyncNotice(null);
     setTimeout(() => {
       setIsSyncing(false);
-      setSyncNotice('Gatekeeper validating webhook verified. 4 constraints synchronized.');
+      setSyncNotice('Standalone evaluation: 4 Gatekeeper constraint templates verified against testbed baseline.');
       setTimeout(() => setSyncNotice(null), 4000);
     }, 700);
   };
