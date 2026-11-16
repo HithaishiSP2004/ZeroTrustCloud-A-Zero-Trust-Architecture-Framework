@@ -124,6 +124,6 @@ export function calculateTrustScore(findings: SecurityFinding[]): CalculatedTrus
       serviceTrust,
     },
     scoringMethodology:
-      'Dynamic Zero-Trust Posture Score calculated from 12 demo testbed findings. Severity deductions: Critical (-12), High (-8), Med (-5), Low (-2). Improves as findings are resolved.',
+      'Dynamic Zero-Trust Posture Score calculated from 12 active cluster findings. Severity deductions: Critical (-12), High (-8), Med (-5), Low (-2). Improves as findings are resolved.',
   };
 }

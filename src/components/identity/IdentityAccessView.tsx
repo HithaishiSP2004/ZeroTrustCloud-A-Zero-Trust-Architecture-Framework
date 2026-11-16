@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  User,
   Shield,
   Layers,
   Terminal,
@@ -45,33 +46,37 @@ export const IdentityAccessView: React.FC<IdentityAccessViewProps> = ({
 
   return (
     <div className="identity-access-view-container">
-      {/* 1. Environment & Fidelity Banner */}
-      <div className="identity-fidelity-banner">
-        <div className="banner-left">
-          <div className="fidelity-badge">
-            <span className="fidelity-dot" />
-            <span>KUBERNETES TESTBED</span>
+      {/* 1. Official Domain Header */}
+      <div className="domain-page-header">
+        <div className="domain-header-left">
+          <div className="domain-title-row">
+            <div className="domain-icon-squircle identity" aria-hidden="true">
+              <User size={18} />
+            </div>
+            <h1 className="domain-page-title">Workload Identity & Service Accounts</h1>
+            <span className="domain-live-badge identity">
+              <span className="live-pip cyan" />
+              K8s Testbed Active
+            </span>
           </div>
-          <div className="banner-copy">
-            <h1 className="banner-title">Workload Identity & Service Accounts</h1>
-            <p className="banner-subtitle">
-              Ground-truth identity introspection across Kubernetes namespaces. Projected tokens, least-privilege service accounts, and boundary enforcement.
-            </p>
+          <div className="domain-meta-subrow">
+            <span className="domain-meta-crumb">
+              Cluster: <strong>kind-trustmesh-lab</strong>
+            </span>
+            <span className="domain-meta-sep">•</span>
+            <span className="domain-meta-crumb">
+              Namespaces: <strong>web, orders, payments, security</strong>
+            </span>
+            <span className="domain-meta-sep">•</span>
+            <span className="domain-meta-crumb">
+              Inventory: <strong>12 Workloads Introspected</strong>
+            </span>
           </div>
         </div>
 
-        <div className="banner-right">
-          <div className="testbed-meta-pills">
-            <span className="meta-pill">
-              <strong>Cluster:</strong> kind-trustmesh-lab
-            </span>
-            <span className="meta-pill">
-              <strong>Namespaces:</strong> web, orders, payments, security
-            </span>
-          </div>
-
+        <div className="domain-header-right">
           <button
-            className={`sync-testbed-btn ${isSyncing ? 'syncing' : ''}`}
+            className={`domain-action-btn ${isSyncing ? 'syncing' : ''}`}
             onClick={handleSyncCluster}
             disabled={isSyncing}
             title="Reload workload state from manifests or live cluster"

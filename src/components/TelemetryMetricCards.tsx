@@ -262,7 +262,7 @@ export const TelemetryMetricCards: React.FC<TelemetryMetricCardsProps> = ({
       </div>
 
       {/* 4. System Load — Mesh Throughput & Telemetry */}
-      <div className="telemetry-chart-card card-load" title="Demonstration Scenario Workload Density">
+      <div className="telemetry-chart-card card-load" title="Cluster Workload & Telemetry Density">
         <div className="chart-card-top">
           <div className="chart-card-meta">
             <div className="chart-icon-box icon-cyan">
