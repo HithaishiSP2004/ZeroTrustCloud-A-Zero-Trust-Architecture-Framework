@@ -1,3 +1,4 @@
+import { DemoNotice } from './DemoNotice';
 import React from 'react';
 import { SecurityFinding, FindingStatus } from '../types/security';
 import { TrustConduitVisualizer } from './TrustConduitVisualizer';
@@ -5,6 +6,8 @@ import { PriorityFindingsCard } from './PriorityFindingsCard';
 import { TelemetryMetricCards } from './TelemetryMetricCards';
 import { RecentActivityCard } from './RecentActivityCard';
 import { SystemStatusCard } from './SystemStatusCard';
+import { LiveKubernetesStatus } from './LiveKubernetesStatus';
+import { LiveVerificationCard } from './verification/LiveVerificationCard';
 import { FooterStatusBar } from './FooterStatusBar';
 
 interface CommandCenterHeroProps {
@@ -23,6 +26,7 @@ export const CommandCenterHero: React.FC<CommandCenterHeroProps> = ({
 }) => {
   return (
     <div className="security-command-center-stage" role="region" aria-label="TrustMesh Security Command Center">
+      <DemoNotice>Security scores, findings, charts and activity below are demonstrations. The separate Live Kubernetes Status panel uses the API. Triage changes last only for this browser session and do not remediate resources.</DemoNotice>
       {/* 1. Primary Focal Row: Command Center Hero (Left, 65%) & Priority Findings (Right, 35%) */}
       <section className="stage-row row-focal" aria-label="Central Posture and Priority Findings">
         <div className="stage-col-left">
@@ -56,7 +60,13 @@ export const CommandCenterHero: React.FC<CommandCenterHeroProps> = ({
         </div>
       </section>
 
-      {/* 4. Bottom Footer Bar */}
+      {/* 4. Verified Live Kubernetes Status & Automated Verification Panel */}
+      <section className="stage-row row-live-k8s" aria-label="Verified Live Kubernetes Telemetry & Automated Verification">
+        <LiveKubernetesStatus />
+        <LiveVerificationCard />
+      </section>
+
+      {/* 5. Bottom Footer Bar */}
       <FooterStatusBar />
     </div>
   );

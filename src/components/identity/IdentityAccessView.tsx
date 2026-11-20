@@ -1,3 +1,4 @@
+import { DemoNotice } from '../DemoNotice';
 import React, { useState } from 'react';
 import {
   User,
@@ -10,6 +11,7 @@ import {
 } from 'lucide-react';
 import { LAB_WORKLOAD_IDENTITIES } from '../../data/demoIdentities';
 import { WorkloadIdentityRecord } from '../../types/identity';
+import { LiveIdentityStatus } from './LiveIdentityStatus';
 import { IdentitySummaryCards } from './IdentitySummaryCards';
 import { VerificationPipelineHero } from './VerificationPipelineHero';
 import { WorkloadIdentitiesTable } from './WorkloadIdentitiesTable';
@@ -26,7 +28,6 @@ export const IdentityAccessView: React.FC<IdentityAccessViewProps> = ({
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [selectedWorkload, setSelectedWorkload] = useState<WorkloadIdentityRecord | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
-  const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [syncNotice, setSyncNotice] = useState<string | null>(null);
 
   const handleSelectWorkload = (workload: WorkloadIdentityRecord) => {
@@ -34,10 +35,15 @@ export const IdentityAccessView: React.FC<IdentityAccessViewProps> = ({
     setIsDrawerOpen(true);
   };
 
-  const handleSyncCluster = () => { setSyncNotice('No cluster connected. These workloads are illustrative fixtures.'); };
+  const handleSyncCluster = () => {
+    setSyncNotice(
+      'Demonstration workloads are shown below. Live Kubernetes workloads and ServiceAccounts are queried directly in the top live status panel.'
+    );
+  };
 
   return (
     <div className="identity-access-view-container">
+      <DemoNotice />
       {/* 1. Official Domain Header */}
       <div className="domain-page-header">
         <div className="domain-header-left">
@@ -48,33 +54,32 @@ export const IdentityAccessView: React.FC<IdentityAccessViewProps> = ({
             <h1 className="domain-page-title">Workload Identity & Service Accounts</h1>
             <span className="domain-live-badge identity">
               <span className="live-pip cyan" />
-              DEMO INVENTORY
+              INTEGRATED MODULE
             </span>
           </div>
           <div className="domain-meta-subrow">
             <span className="domain-meta-crumb">
-              Cluster: <strong>kind-trustmesh-lab</strong>
+              Live Target: <strong>kind-trustmesh-network-lab</strong>
             </span>
             <span className="domain-meta-sep">•</span>
             <span className="domain-meta-crumb">
-              Namespaces: <strong>web, orders, payments, security</strong>
+              Namespace: <strong>trustmesh-integration-test</strong>
             </span>
             <span className="domain-meta-sep">•</span>
             <span className="domain-meta-crumb">
-              Inventory: <strong>Illustrative workloads</strong>
+              Attestor: <strong>SPIRE Server / Agent</strong>
             </span>
           </div>
         </div>
 
         <div className="domain-header-right">
           <button
-            className={`domain-action-btn ${isSyncing ? 'syncing' : ''}`}
+            className="domain-action-btn"
             onClick={handleSyncCluster}
-            disabled={isSyncing}
-            title="Reload workload state from manifests or live cluster"
+            title="Explain the identity inventory and live status"
           >
-            <RefreshCw size={13} className={isSyncing ? 'spin-icon' : ''} />
-            <span>{isSyncing ? 'Introspecting...' : 'Connection status'}</span>
+            <RefreshCw size={13} />
+            <span>About identity sources</span>
           </button>
         </div>
       </div>
@@ -86,22 +91,30 @@ export const IdentityAccessView: React.FC<IdentityAccessViewProps> = ({
         </div>
       )}
 
-      {/* 2. Dynamic KPI Summary Cards */}
+      {/* 2. Verified Live Kubernetes Identity & ServiceAccounts Panel */}
+      <LiveIdentityStatus />
+
+      {/* 3. Demonstration & Simulated Scenarios Section Header */}
+      <div className="demo-section-divider">
+        <span className="demo-section-label">DEMONSTRATION SCENARIOS & TRIAGE FIXTURES</span>
+      </div>
+
+      {/* 4. Dynamic KPI Summary Cards */}
       <IdentitySummaryCards
         workloads={workloads}
         activeFilter={statusFilter}
         onFilterChange={setStatusFilter}
       />
 
-      {/* 3. Verification Pipeline Hero Decision Engine */}
+      {/* 5. Verification Pipeline Hero Decision Engine */}
       <VerificationPipelineHero />
 
-      {/* 4. Filterable Workload Identities Table */}
+      {/* 6. Filterable Workload Identities Table */}
       <div className="identity-table-section">
         <div className="section-header-row">
           <div className="section-title-wrap">
             <Layers size={18} className="section-icon" />
-            <h3 className="section-title">Monitored Kubernetes Workloads</h3>
+            <h3 className="section-title">Demonstration Workload Catalog</h3>
           </div>
           <div className="section-legend">
             <span className="legend-item">
@@ -123,7 +136,7 @@ export const IdentityAccessView: React.FC<IdentityAccessViewProps> = ({
         />
       </div>
 
-      {/* 5. Workload Detail Drawer (Apple-spring animation) */}
+      {/* 7. Workload Detail Drawer (Apple-spring animation) */}
       <WorkloadDetailDrawer
         workload={selectedWorkload}
         isOpen={isDrawerOpen}
@@ -133,4 +146,5 @@ export const IdentityAccessView: React.FC<IdentityAccessViewProps> = ({
     </div>
   );
 };
+
 
