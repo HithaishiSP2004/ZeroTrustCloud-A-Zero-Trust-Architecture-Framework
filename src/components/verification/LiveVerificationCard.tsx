@@ -1,83 +1,47 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React from 'react';
 import {
   CheckCircle2,
   XCircle,
   HelpCircle,
   RefreshCw,
   Clock,
+  Network, Layers, Shield, KeyRound, Sailboat, Boxes, CircleDot, ChevronRight,
   ShieldCheck,
   AlertTriangle,
-  ChevronDown,
-  ChevronUp,
 } from 'lucide-react';
 import {
   LiveSecurityVerificationResponse,
   VerificationCheck,
-  requestSecurityVerification,
-  snapshotAgeReason,
 } from '../../utils/securityVerification';
 
-export const LiveVerificationCard: React.FC = () => {
-  const [snapshot, setSnapshot] = useState<{
-    data: LiveSecurityVerificationResponse;
-    retrievedAt: string;
-  } | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [now, setNow] = useState(Date.now);
-  const requestId = useRef(0);
-  const activeRequest = useRef<AbortController | null>(null);
+import type { Observation } from '../../hooks/useCommandSources';
 
-  const data = snapshot?.data ?? null;
+const controlFamilies: Record<string,string> = {
+  k8s:'Kubernetes readiness',gatekeeper:'Gatekeeper',calico:'Calico',istio:'Istio',spire:'SPIRE',workload:'Integration workloads',
+};
+
+const domainIcons = new Map([
+  ['Kubernetes readiness', Boxes], ['Gatekeeper', Shield], ['Calico', Network],
+  ['Istio', Sailboat], ['SPIRE', KeyRound], ['Integration workloads', Layers],
+]);
+
+export function LiveVerificationCard({ source }: { source: Observation<LiveSecurityVerificationResponse> }) {
+  const { data, isLoading, error, staleReason, refresh: fetchVerification } = source;
+
+  const isStale = Boolean(staleReason);
   const checks = data?.checks ?? [];
+
+  const groups=new Map<string,VerificationCheck[]>();
+  for(const check of checks){
+    const family=controlFamilies[check.id.split('-')[0]] ?? 'Other reported checks';
+    const group=groups.get(family) ?? [];
+    group.push(check);
+    groups.set(family,group);
+  }
 
   const passCount = checks.filter((c) => c.status === 'PASS').length;
   const failCount = checks.filter((c) => c.status === 'FAIL').length;
   const unknownCount = checks.filter((c) => c.status === 'UNKNOWN').length;
-
-  const staleReason = data
-    ? isLoading
-      ? 'Refresh pending; showing previous snapshot'
-      : error
-      ? 'Latest refresh failed; showing previous snapshot'
-      : snapshotAgeReason(data.collectedAt, now)
-    : null;
-  const isStale = Boolean(staleReason);
-
-  const fetchVerification = useCallback(async () => {
-    const id = ++requestId.current;
-    activeRequest.current?.abort();
-    const controller = new AbortController();
-    activeRequest.current = controller;
-    setIsLoading(true);
-    setError(null);
-    try {
-      const result = await requestSecurityVerification(controller.signal);
-      if (id !== requestId.current || controller.signal.aborted) return;
-      const received = Date.now();
-      setSnapshot({ data: result, retrievedAt: new Date(received).toISOString() });
-      setNow(received);
-    } catch (err: unknown) {
-      if (id !== requestId.current || controller.signal.aborted) return;
-      setError(err instanceof Error ? err.message : 'Unable to retrieve automated verification');
-    } finally {
-      if (id === requestId.current && !controller.signal.aborted) {
-        setIsLoading(false);
-        activeRequest.current = null;
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    void fetchVerification();
-    const timer = setInterval(() => setNow(Date.now()), 1000);
-    return () => {
-      ++requestId.current;
-      activeRequest.current?.abort();
-      clearInterval(timer);
-    };
-  }, [fetchVerification]);
 
   const formatTimestamp = (isoString?: string | null) => {
     if (!isoString) return 'Not reported';
@@ -102,7 +66,7 @@ export const LiveVerificationCard: React.FC = () => {
               <ShieldCheck size={12} />
               <span>AUTOMATED VERIFICATION</span>
             </span>
-            <span className="card-heading">Zero Trust Control Assurances</span>
+            <h2 className="card-heading">Verification explorer</h2>
           </div>
           <div className="timestamp-row">
             <Clock size={11} className="text-muted" />
@@ -133,9 +97,9 @@ export const LiveVerificationCard: React.FC = () => {
       </div>
 
       {error && !data && (
-        <div className="compact-error-box">
+        <div className="compact-error-box" role="alert">
           <XCircle size={14} />
-          <span>{error}</span>
+          <span>Verification unavailable. {error}</span>
           <button onClick={() => void fetchVerification()} className="compact-retry-btn">
             Retry
           </button>
@@ -165,21 +129,17 @@ export const LiveVerificationCard: React.FC = () => {
               <span>{unknownCount} UNKNOWN</span>
             </div>
             <div className="total-checks-note">
-              <span>{checks.length} Controls Evaluated (No Synthetic Score)</span>
+              <span>{isStale && 'Last-known results / '}{checks.length} controls evaluated</span>
             </div>
-            <button
-              className="toggle-expand-btn"
-              onClick={() => setIsExpanded(!isExpanded)}
-              aria-expanded={isExpanded}
-            >
-              <span>{isExpanded ? 'Hide Checks' : 'View Checks'}</span>
-              {isExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-            </button>
           </div>
-
-          {isExpanded && (
-            <div className="compact-checks-list animate-fade-in">
-              {checks.map((chk: VerificationCheck) => (
+          <div className="tm-verification-groups">
+            {Array.from(groups,([name,items])=>{
+              const Icon=domainIcons.get(name) ?? CircleDot;
+              return <details key={name} open={items.some(c=>c.status!=='PASS') || undefined}>
+              <summary className="tm-domain-head"><Icon size={17} aria-hidden="true"/><strong>{name}</strong><span>{items.length} checks</span>
+                <span className="tm-group-counts">{(['PASS','FAIL','UNKNOWN'] as const).map(status=><b key={status} data-status={status} data-active={items.some(c=>c.status===status)}>{items.filter(c=>c.status===status).length} {status}</b>)}</span><ChevronRight size={14} className="tm-chevron" aria-hidden="true"/>
+              </summary>
+              {items.map(chk=>(
                 <div key={chk.id} className={`compact-check-item ${chk.status.toLowerCase()}`}>
                   <div className="item-status-icon">
                     {chk.status === 'PASS' && <CheckCircle2 size={13} className="text-emerald-400" />}
@@ -192,14 +152,18 @@ export const LiveVerificationCard: React.FC = () => {
                       <span className={`item-status-pill ${chk.status.toLowerCase()}`}>{chk.status}</span>
                     </div>
                     <div className="item-reason-line">{chk.reason}</div>
+                    <details className="tm-check-evidence"><summary>Inspection evidence</summary>
+                      <time dateTime={chk.observedAt}>{formatTimestamp(chk.observedAt)}</time>
+                      <pre>{JSON.stringify(chk.evidence,null,2)}</pre>
+                    </details>
                     <div className="item-source-line">
                       Source: <code>{chk.source}</code>
                     </div>
                   </div>
                 </div>
               ))}
-            </div>
-          )}
+            </details>})}
+          </div>
         </div>
       )}
     </div>

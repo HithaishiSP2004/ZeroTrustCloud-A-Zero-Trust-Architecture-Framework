@@ -72,6 +72,7 @@ export function validateIdentityWorkloads(value: unknown): LiveIdentityWorkloads
         isText(w.phase) &&
         isText(w.serviceAccountName) &&
         isRecord(w.labels) &&
+        Object.values(w.labels).every(label => typeof label === 'string') &&
         isCount(w.readyContainers) &&
         isCount(w.totalContainers) &&
         w.readyContainers <= w.totalContainers
@@ -80,9 +81,16 @@ export function validateIdentityWorkloads(value: unknown): LiveIdentityWorkloads
     !value.serviceAccounts.every((sa: unknown) => isRecord(sa) && isText(sa.name)) ||
     !isRecord(value.spireRegistration) ||
     typeof value.spireRegistration.available !== 'boolean' ||
+    !isText(value.spireRegistration.name) ||
+    !(value.spireRegistration.spiffeIDTemplate == null || isText(value.spireRegistration.spiffeIDTemplate)) ||
+    ![value.spireRegistration.namespaceSelector, value.spireRegistration.podSelector].every(s => s == null || isRecord(s)) ||
+    !(value.spireRegistration.statistics == null || (isRecord(value.spireRegistration.statistics) && Object.values(value.spireRegistration.statistics).every(isCount))) ||
+    !(value.spireRegistration.error == null || typeof value.spireRegistration.error === 'string') ||
     !Array.isArray(value.spireComponents) ||
     !value.spireComponents.every(
-      (c: unknown) => isRecord(c) && isText(c.name) && isText(c.kind) && typeof c.available === 'boolean'
+      (c: unknown) => isRecord(c) && isText(c.name) && isText(c.kind) && typeof c.available === 'boolean' &&
+        [c.readyReplicas, c.desiredReplicas].every(n => n == null || isCount(n)) &&
+        (c.error == null || typeof c.error === 'string')
     )
   ) {
     throw new Error(

@@ -151,10 +151,7 @@ export const App: React.FC = () => {
           {currentModule === 'command_center' ? (
             commandCenterTab === 'overview' ? (
               <CommandCenterHero
-                findings={findings}
-                onFindingClick={handleFindingClick}
-                onStatusChange={handleUpdateFindingStatus}
-                onOpenIntegrations={() => setIsIntegrationsModalOpen(true)}
+                onNavigate={setCurrentModule}
                 onViewAllFindings={() => setCommandCenterTab('findings')}
               />
             ) : (
@@ -176,7 +173,7 @@ export const App: React.FC = () => {
               </div>
             )
           ) : currentModule === 'workload_identity' ? (
-            <IdentityAccessView onNavigateToFinding={handleNavigateToFinding} />
+            <IdentityAccessView />
           ) : currentModule === 'policy_governance' ? (
             <PolicyGovernanceView onNavigateToFinding={handleNavigateToFinding} />
           ) : currentModule === 'service_mesh' ? (

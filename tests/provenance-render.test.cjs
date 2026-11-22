@@ -19,7 +19,7 @@ const { INITIAL_DEMO_FINDINGS } = require('../src/data/demoFindings.ts');
 const notice = 'DEMONSTRATION DATA — NOT LIVE SECURITY TELEMETRY';
 const render = (component, props = {}) => renderToStaticMarkup(React.createElement(component, props));
 
-test('all security pages render explicit demonstration provenance', () => {
+test('security pages identify their actual evidence sources', () => {
   const pages = [
     ['CommandCenterHero', '../src/components/CommandCenterHero.tsx'],
     ['IdentityAccessView', '../src/components/identity/IdentityAccessView.tsx'],
@@ -32,7 +32,7 @@ test('all security pages render explicit demonstration provenance', () => {
     const html = render(require(filename)[name], { findings: INITIAL_DEMO_FINDINGS, onFindingClick() {} });
     const expectedNotice = name === 'SecurityObservabilityView'
       ? 'LIVE VERIFICATION + DEMONSTRATION DATA'
-      : notice;
+      : name === 'IdentityAccessView' ? 'Kubernetes reports the assignments' : notice;
     assert.ok(html.includes(expectedNotice), name);
     assert.doesNotMatch(html, /Mathematically Proven|6\/6 Controls Verified|Zero Trust Enforced|>Live<|Negotiating mTLS/);
   }
