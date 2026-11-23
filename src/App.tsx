@@ -10,6 +10,7 @@ import { IntegrationModal } from './components/IntegrationModal';
 import { IdentityAccessView } from './components/identity/IdentityAccessView';
 import { PolicyGovernanceView } from './components/policies/PolicyGovernanceView';
 import { TrustArchitectureView } from './components/mesh/TrustArchitectureView';
+import { savedSupplyChain } from './data/savedSupplyChain';
 import { SupplyChainView } from './components/supply-chain/SupplyChainView';
 import { SecurityObservabilityView } from './components/observability/SecurityObservabilityView';
 import { INITIAL_DEMO_FINDINGS, PLANNED_INTEGRATIONS } from './data/demoFindings';
@@ -32,17 +33,17 @@ const MODULE_META: Record<string, { title: string; breadcrumb: string; descripti
   service_mesh: {
     title: 'Trust Architecture (Istio)',
     breadcrumb: 'Security Modules',
-    description: 'Istio mutual TLS enforcement and Layer-7 AuthorizationPolicy management. Zero plaintext east-west traffic between microservices.',
+    description: 'Network isolation, workload-scoped mutual TLS configuration and Kubernetes sidecar evidence.',
   },
   supply_chain: {
-    title: 'Supply Chain Defense',
+    title: 'Supply Chain Integrity',
     breadcrumb: 'Security Modules',
-    description: 'Pre-deployment container vulnerability scanning with Aqua Trivy and cryptographic image signature verification with Sigstore Cosign and OPA Gatekeeper.',
+    description: 'Historical Trivy reports and recorded Cosign signature evidence.',
   },
   experiments: {
-    title: 'Centralized Security Observability & Evaluation',
+    title: 'Security Verification',
     breadcrumb: 'Observability & Evaluation',
-    description: 'Centralized telemetry aggregation, OpenTelemetry normalization, and mathematical Zero Trust control evaluation.',
+    description: 'Automated control validation and Kubernetes evidence.',
   },
   integrations: {
     title: 'Integrations & Providers',
@@ -177,11 +178,11 @@ export const App: React.FC = () => {
           ) : currentModule === 'policy_governance' ? (
             <PolicyGovernanceView onNavigateToFinding={handleNavigateToFinding} />
           ) : currentModule === 'service_mesh' ? (
-            <TrustArchitectureView onNavigateToFinding={handleNavigateToFinding} />
+            <TrustArchitectureView />
           ) : currentModule === 'supply_chain' ? (
-            <SupplyChainView onNavigateToFinding={handleNavigateToFinding} />
+            <SupplyChainView records={savedSupplyChain} />
           ) : currentModule === 'experiments' ? (
-            <SecurityObservabilityView onNavigateToFinding={handleNavigateToFinding} />
+            <SecurityObservabilityView />
           ) : (
             <ModulePlaceholder
               title={meta.title}

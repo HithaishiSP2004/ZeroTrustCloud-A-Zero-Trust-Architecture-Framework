@@ -104,15 +104,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       id: 'supply_chain',
-      label: 'Supply Chain Defense',
+      label: 'Supply Chain Integrity',
       icon: <Package size={16} />,
-      badge: 2, // 2 blocked artifacts (1 unsigned + 1 vulnerable)
+
     },
     {
       id: 'experiments',
-      label: 'Audit & Observability',
+      label: 'Security Verification',
       icon: <BarChart3 size={16} />,
-      badge: 8, // 8 correlated multi-domain security events
     },
     {
       id: 'integrations',

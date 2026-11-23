@@ -2,7 +2,7 @@
 
 > 📋 **Current Status: Phase 1 — Dashboard Foundation Implemented & Verified**
 > 
-> *Phase 1 delivers the TrustMesh Security Command Center dashboard application shell, interactive findings explorer, threat context drawers, and honest integration state indicators. In accordance with `PROJECT_CORE.md`, all displayed telemetry records are controlled demonstration fixtures.*
+> *Phase 1 delivers the TrustMesh Security Command Center dashboard application shell, interactive findings explorer, threat context drawers, and honest integration state indicators. The Trust Architecture page reads the local lab network and automated verification endpoints. Demonstration findings elsewhere carry their own provenance labels.*
 
 **ZeroTrustCloud** (proposed platform name: **TrustMesh**) is a final-year MCA cybersecurity engineering project exploring the design, automated policy governance, and empirical evaluation of an **Identity-Centric Zero-Trust Architecture (ZTA)** tailored specifically for containerized, multi-cloud Kubernetes environments (AWS EKS & Azure AKS).
 
@@ -114,12 +114,19 @@ npm run preview
 npm run dev
 ```
 
+#### Trust Architecture
+
+Open **Security Verification** to re-run the read-only verifier, inspect the grouped checks and their Kubernetes evidence, or search the register. A failed refresh retains the last-known snapshot. The historical scenario is separately disclosed.
+
+Open **Trust Architecture** in the sidebar to inspect Calico ingress selectors, Istio PeerAuthentication, and Kubernetes-reported Pod sidecars. The page reads `/api/security/network` and `/api/security/verification` through the configured Vite proxy. Select a workload or security layer for source details, or expand **Security evidence** to review the underlying configuration and check results. Refresh failures label retained observations as last-known. The diagram depicts policy relationships and does not measure traffic.
+
 #### Verified Phase 1 Capabilities:
 * **Honest Data Tagging:** Prominent indicator declaring `[SIMULATED TESTBED]` across all screens; zero fabricated live cloud connections.
 * **Security Command Center:** 2.5D Isometric Telemetry space tracking evaluated workloads, active breaches, severity distribution chips, and a floating top-priority incident card with 1-click inspection.
 * **Progressive Disclosure Architecture:** Dedicated Findings Explorer workspace featuring live free-text search (CVE, title, pod name, namespace), multi-factor dropdown filters (Severity, Architecture Pillar, Status), and multi-column sorting.
 * **Threat Lineage Drawer:** Slide-over detail drawer featuring threat impact analysis, 4-step attack path graphs, CIS/NIST remediation guidance, and syntax-highlighted Rego constraint snippets.
 * **Session Triage Updates:** Real-time local state triage toggling (New, In Progress, Resolved) updating table badges and metric counters instantly.
+* **Supply Chain Integrity:** Inspect saved Trivy and Cosign files in the artifact chamber and evidence ledger. Digest comparisons describe recorded strings. Execution provenance and cryptographic verification remain unconfirmed. The pipeline walkthrough is a collapsed teaching example.
 * **Planned Integrations Modal:** Transparent connector inspection dialog displaying planned status for AWS EKS, Azure AKS, Istio, OPA Gatekeeper, SPIRE, and Cosign.
 * **Module Shell Navigation:** Clean routes for upcoming engines with architectural blueprints and return buttons.
 
