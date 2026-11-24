@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <style>
+    svg {fill:#245878} .facet {fill:#55798d} .key {fill:#126b7b}
+    @media (prefers-color-scheme:dark) {svg {fill:#a5cee4} .facet {fill:#587e98} .key {fill:#b9edf0}}
+  </style>
+  <path d="M20 1H10L1 10v12l9 9h12l9-9V11.5l-4.5 2.7v6L20.2 26.5h-8.4l-6.3-6.3v-8.4l6.3-6.3h5.5Z"/>
+  <path class="facet" d="m1 22 9 9h12l9-9-4.5-1.8-6.3 6.3h-8.4l-6.3-6.3Z"/>
+  <path d="m15.6 7.2 8.6 8.8-8.6 9-8.5-9Z"/>
+  <path class="facet" d="m15.6 7.2 8.6 8.8-8.6 9 1.9-9Z"/>
+  <path class="key" d="m24 1 7 7-4.2 2.3-5.3-5.4Z"/>
+</svg>

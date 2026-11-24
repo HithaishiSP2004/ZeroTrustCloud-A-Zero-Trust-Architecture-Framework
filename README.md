@@ -127,8 +127,11 @@ Open **Trust Architecture** in the sidebar to inspect Calico ingress selectors, 
 * **Threat Lineage Drawer:** Slide-over detail drawer featuring threat impact analysis, 4-step attack path graphs, CIS/NIST remediation guidance, and syntax-highlighted Rego constraint snippets.
 * **Session Triage Updates:** Real-time local state triage toggling (New, In Progress, Resolved) updating table badges and metric counters instantly.
 * **Supply Chain Integrity:** Inspect saved Trivy and Cosign files in the artifact chamber and evidence ledger. Digest comparisons describe recorded strings. Execution provenance and cryptographic verification remain unconfirmed. The pipeline walkthrough is a collapsed teaching example.
-* **Planned Integrations Modal:** Transparent connector inspection dialog displaying planned status for AWS EKS, Azure AKS, Istio, OPA Gatekeeper, SPIRE, and Cosign.
-* **Module Shell Navigation:** Clean routes for upcoming engines with architectural blueprints and return buttons.
+* **Environment & Integrations:** Select a technology in either laboratory to inspect its scoped Kubernetes inventory and matching verification checks. Each source retains its own collection time and availability. Expand a check for its reported source, observation time, and reason. AWS EKS and Azure AKS appear separately as disconnected future extensions.
+* **Workspace preferences:** Settings opens a right-docked panel or a mobile bottom sheet. Theme previews apply immediately and use the existing saved appearance. Desktop navigation preferences use the same pin state as the rail. The motion section reports the operating system preference.
+* **Command Bridge and Navigation Fabric:** The Core emblem returns to the Command Center. The Local Kubernetes disclosure shows the cluster status API observation, its collection time when available, and the two fixed context names. Hover or keyboard focus expands the rail over the workspace. Escape dismisses temporary expansion and preserves focus. Pinning reserves workspace width above 850 px. On smaller screens the pin opens an overlay that closes on selection, Escape, or an outside press. The shell reveal runs once per document and follows the system motion preference.
+
+Run the dashboard regression tests with `node --test tests/*.test.cjs`. With the app preview, its configured read-only lab API, and a dedicated Chrome debugging session running, use `node tests/shell-browser.mjs <site-url> <chrome-debug-url> [screenshot-directory]` to exercise the shell across six viewport sizes in both themes.
 
 ---
 
