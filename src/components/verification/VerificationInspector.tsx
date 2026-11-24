@@ -4,20 +4,43 @@ import type { VerificationCheck } from '../../utils/securityVerification';
 import { SnapshotTime } from '../SnapshotTime';
 import { domainOf, scopeNotes } from './verificationDomains';
 
+const fieldLabels = new Map(Object.entries({
+  name: 'Name', kind: 'Resource kind', readyReplicas: 'Ready replicas',
+  desiredReplicas: 'Desired replicas', apiGroups: 'API groups', sa: 'Service account',
+  podSelector: 'Pod selector', namespaceSelector: 'Namespace selector', matchLabels: 'Match labels',
+  spiffeIDTemplate: 'SPIFFE ID template', workloadScoped: 'Workload scoped',
+  policyTypes: 'Policy types', ingressRules: 'Ingress rules', webhookEnforced: 'Webhook enforced',
+  enforcementPoints: 'Enforcement points', serviceAccountName: 'Service account name',
+  components: 'Components', available: 'Available', error: 'Error', nodes: 'Nodes',
+  workloads: 'Workloads', podsSelected: 'Pods selected', entriesToSet: 'Entries to set',
+  entryFailures: 'Entry failures', namespacesSelected: 'Namespaces selected', entriesMasked: 'Entries masked',
+}));
+
 function evidenceFacts(evidence: Record<string, unknown>) {
-  const facts: [string,string][] = [];
-  function visit(path:string, value:unknown) {
-    if (facts.length >= 8) return;
-    if (Array.isArray(value) && value.every(item => typeof item === 'string')) {
-      facts.push([path,value.length ? value.join(', ') : '[]']);
-    } else if (value !== null && typeof value === 'object') {
-      const entries = Object.entries(value);
-      if (!entries.length) facts.push([path,'{}']);
-      for (const [key,child] of entries) visit(path ? path+'.'+key : key,child);
-    } else facts.push([path,String(value)]);
+  type Fact = {label: string; value: string; path: string};
+  const groups = new Map<string, {label: string; fields: Fact[]}>();
+  function visit(value: unknown, path: string[], labels: string[]) {
+    if (Array.isArray(value) && value.some(item => typeof item !== 'string')) {
+      value.forEach((item, index) => {
+        const name = item && typeof item === 'object' && typeof item.name === 'string' ? item.name : '';
+        const group = labels[labels.length - 1] + ' [' + index + ']' + (name ? ' · ' + name : '');
+        visit(item, [...path, String(index)], [...labels.slice(0, -1), group]);
+      });
+    } else if (value && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length) {
+      for (const [key, child] of Object.entries(value)) {
+        visit(child, [...path, key], [...labels, fieldLabels.get(key) ?? key]);
+      }
+    } else {
+      const parent = JSON.stringify(path.slice(0, -1));
+      const group = groups.get(parent) ?? {label: labels.slice(0, -1).join(' / '), fields: []};
+      const display = Array.isArray(value) && value.length ? value.join(', ')
+        : typeof value === 'object' ? JSON.stringify(value) : String(value);
+      group.fields.push({label: labels[labels.length - 1], value: display, path: JSON.stringify(path)});
+      groups.set(parent, group);
+    }
   }
-  for (const [key,value] of Object.entries(evidence)) visit(key,value);
-  return facts;
+  if (Object.keys(evidence).length) visit(evidence, [], []);
+  return groups;
 }
 export function VerificationInspector({check,previous,next,close,headingRef,lastKnown}: {
   check: VerificationCheck; previous?:()=>void; next?:()=>void; close:()=>void;
@@ -34,8 +57,14 @@ export function VerificationInspector({check,previous,next,close,headingRef,last
     <code>{check.id}</code>
     <p className="vs-result" data-result={lastKnown?'past':check.status}>{lastKnown?'Last known · ':''}{check.status}</p>
     <p className="vs-reason">{check.reason}</p>
-    {facts.length>0 ? <dl className="vs-facts">{facts.map(([key,value])=>
-      <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}</dl> : <p>No evidence fields reported.</p>}
+    {facts.size ? Array.from(facts, ([parent, group]) => <div className="vs-fact-group" key={parent}>
+      {group.label && <strong className="vs-resource">{group.label}</strong>}
+      <dl className="vs-facts" aria-label={group.label || undefined}>
+        {group.fields.map(({label, value, path}) => <div key={path}>
+          <dt>{label}</dt><dd>{value}</dd>
+        </div>)}
+      </dl>
+    </div>) : <p>No evidence fields reported.</p>}
     <div className="vs-provenance"><small>Kubernetes source</small><code>{check.source}</code>
       <small>Observed</small><SnapshotTime value={check.observedAt}/></div>
     {note && <p className="vs-scope">{note}</p>}

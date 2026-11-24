@@ -13,8 +13,11 @@ await new Promise((resolve,reject)=>{socket.onopen=resolve;socket.onerror=reject
 let id=0;
 const pending=new Map();
 const exceptions=[];
+let verificationRequest;
 socket.onmessage=({data})=>{
   const msg=JSON.parse(data);
+  if(msg.method==='Network.responseReceived' &&
+    new URL(msg.params.response.url).pathname==='/api/security/verification') verificationRequest=msg.params.requestId;
   if(msg.method==='Runtime.exceptionThrown') exceptions.push(msg.params.exceptionDetails.text);
   if(!pending.has(msg.id)) return;
   const {resolve,reject}=pending.get(msg.id);
@@ -61,7 +64,9 @@ async function capture(theme,view) {
 async function layout() {
   const overflowing=await evaluate(`[...document.querySelectorAll('.vs-studio,.vs-studio *')].filter(e=>
     e instanceof HTMLElement && e.clientWidth>0 && getComputedStyle(e).display!=='inline' &&
-    (e.scrollWidth>e.clientWidth+2 || (e.scrollHeight>e.clientHeight+2 && ['auto','hidden','clip','scroll'].includes(getComputedStyle(e).overflowY)))
+    (e.scrollWidth>e.clientWidth+2 || (e.scrollHeight>e.clientHeight+2 &&
+      !(e.matches('.vs-inspector') && getComputedStyle(e).overflowY==='auto') &&
+      ['auto','hidden','clip','scroll'].includes(getComputedStyle(e).overflowY)))
   ).map(e=>e.className)`);
   assert.deepEqual(overflowing,[]);
   assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'));
@@ -71,11 +76,13 @@ try {
   await call('Page.navigate',{url:site});
   await navigate('Security Verification');
   await until("document.querySelectorAll('.vs-row').length>0");
-  // Compare rendered IDs against the real relative endpoint. No response interception on the success path.
-  const response=await evaluate("fetch('/api/security/verification').then(r=>r.json())");
+  // Compare with the exact collection used by the UI. A second GET may observe different replicas.
+  const {body}=await call('Network.getResponseBody',{requestId:verificationRequest});
+  const response=JSON.parse(body);
   const ids=response.checks.map(c=>c.id);
   assert.deepEqual(await evaluate("Array.from(document.querySelectorAll('.vs-row'),b=>b.dataset.check)"),ids);
   console.log('Proxy response',response.collectedAt,ids.length,'checks');
+  console.log('Result counts', await evaluate("document.querySelector('.vs-legend').innerText"));
   for(const [width,height] of [[1366,768],[1440,900],[1536,864],[1920,1080],[390,844]]){
     await call('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false});
     await call('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});
@@ -95,16 +102,23 @@ try {
       assert.equal(await evaluate("document.querySelector('.vs-row[aria-pressed=true]').dataset.check"),ids[1]);
       await click('[aria-label="Previous check"]');
       await click('.vs-inspector summary');await layout();
+      if(width>900) assert.ok(await evaluate("document.querySelector('.vs-inspector').offsetHeight<=document.querySelector('.vs-matrix').offsetHeight+1"));
       assert.ok(await evaluate("!!JSON.parse(document.querySelector('.vs-inspector pre').textContent)"));
       await key('Escape',27);
       assert.ok(await evaluate("document.activeElement===document.querySelector('.vs-cells button')"));
       await evaluate("document.querySelector('.vs-register').scrollIntoView()");
       if(width===1440) await capture(theme,'register');
-      await click('.vs-row[data-check="istio-workload-strict-mtls"]');
-      assert.equal(await evaluate("document.querySelector('.vs-cells [aria-pressed=true]').dataset.check"),'istio-workload-strict-mtls');
+      for(const check of response.checks){
+        await click('.vs-row[data-check="'+check.id+'"]');
+        assert.equal(await evaluate("document.querySelector('.vs-cells [aria-pressed=true]').dataset.check"),check.id);
+        await click('.vs-inspector summary');
+        await layout();
+        assert.deepEqual(await evaluate("JSON.parse(document.querySelector('.vs-inspector pre').textContent)"),check.evidence);
+      }
+      await click('.vs-row[data-check="spire-control-plane-components"]');
       await layout();
       if(width===1440) {
-        await evaluate("document.querySelector('.vs-surface').scrollIntoView()");
+        await evaluate("document.querySelector('.vs-heading').scrollIntoView({block:'start',behavior:'instant'})");
         await capture(theme,'inspector');
       }
       await click('[aria-label="Close evidence inspector"]');
