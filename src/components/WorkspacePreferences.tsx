@@ -17,7 +17,8 @@ function useMedia(query: string) {
   return matches;
 }
 
-export function WorkspacePreferences({ dialog, theme, setTheme, pinned, setPinned, cluster }: {
+export function WorkspacePreferences({ dialog, theme, setTheme, pinned, setPinned, cluster, onReplay }: {
+  onReplay: () => void;
   dialog: RefObject<HTMLDialogElement>; theme: Theme; setTheme: (theme: Theme) => void;
   pinned: boolean; setPinned: (value: boolean) => void; cluster: ClusterFeed;
 }) {
@@ -50,7 +51,8 @@ export function WorkspacePreferences({ dialog, theme, setTheme, pinned, setPinne
           </label>)}</div>}
       </fieldset>
       <section><h3>Motion</h3><p>{reduced ? 'Reduced motion is active. The shell opens immediately.' :
-        'System motion is enabled. The Fabric Reveal plays once when the workspace loads.'}</p></section>
+        'System motion is enabled. The Fabric Reveal plays once when the workspace loads.'}</p>
+        <button type="button" className="launch-replay" onClick={onReplay}>Replay opening experience</button></section>
       <section><h3>Workspace information</h3><dl className="workspace-info">
         <dt>Application</dt><dd>TrustMesh / ZeroTrustCloud</dd><dt>Project</dt><dd>PRJ-34</dd>
         <dt>Environment</dt><dd>Local Kubernetes · two fixed contexts</dd><dt>Cluster status</dt>

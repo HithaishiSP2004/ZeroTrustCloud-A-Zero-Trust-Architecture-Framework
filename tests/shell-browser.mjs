@@ -13,8 +13,10 @@ await new Promise((resolve,reject)=>{socket.onopen=resolve;socket.onerror=reject
 let id=0;
 const pending=new Map();
 const exceptions=[];
+const consoleErrors=[];
 socket.onmessage=({data})=>{
   const msg=JSON.parse(data);
+  if(msg.method==='Runtime.consoleAPICalled' && msg.params.type==='error') consoleErrors.push(msg.params.args.map(arg=>arg.value || arg.description));
   if(msg.method==='Runtime.exceptionThrown') exceptions.push(msg.params.exceptionDetails.text);
   if(!pending.has(msg.id)) return;
   const {resolve,reject}=pending.get(msg.id);
@@ -84,13 +86,16 @@ try {
     });`});
   await call('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'no-preference'}]});
   await call('Page.navigate',{url:site});
+  await until("document.querySelector('.launch-enter')");
+  await evaluate("document.querySelector('.launch-enter').click()");
+  await until("!document.querySelector('.tm-launch')");
   await until("document.querySelector('.shell-brand')");
-  const morph = "getComputedStyle(document.querySelector('.shell-header'),'::after').animationName";
+  const morph = "getComputedStyle(document.querySelector('.bridge-surface path')).animationName";
   await until('window.fabricBounds.length===2');
   const bounds = await evaluate('window.fabricBounds');
   assert.deepEqual(bounds[0],bounds[1]);
   const events = await evaluate('window.fabricEvents');
-  for (const animation of ['bridge-key-seat','bridge-line','seam-reveal','fabric-boundary']) {
+  for (const animation of ['emblem-settle','bridge-line','fabric-boundary']) {
     assert.equal(events.filter(name => name===animation).length,1,animation);
   }
   assert.equal(events.filter(name => name==='shell-arrive').length,9);
@@ -154,7 +159,7 @@ try {
         'Command Center': 'Zero Trust Command Center', 'Identity & Access': 'Workload Identity',
         'Policies & Workloads': 'Policy Enforcement Studio', 'Trust Architecture': 'Trust Architecture',
         'Supply Chain Integrity': 'Supply Chain Integrity', 'Security Verification': 'Security Verification',
-        'Integrations': 'Environment & Integrations',
+        'Integrations': 'Environment Hub',
       };
       for (const [label,heading] of Object.entries(headings)) {
         await click(button(label));
@@ -162,9 +167,9 @@ try {
         assert.equal(await evaluate("document.querySelector('main h1').textContent"),heading);
         assert.ok(await evaluate("document.documentElement.scrollWidth<=innerWidth && document.querySelector('main').scrollWidth<=document.querySelector('main').clientWidth+1"));
         assert.ok(await evaluate(`(() => {
-          const [brand,seam,controls]=[...document.querySelector('.shell-header').children].map(el=>el.getBoundingClientRect());
-          const project=document.querySelector('.shell-project').getBoundingClientRect();
-          return brand.right<=seam.left && seam.right<=controls.left && project.width>0 && controls.right<=innerWidth;
+          const brand=document.querySelector('.shell-brand').getBoundingClientRect();
+          const controls=document.querySelector('.shell-controls').getBoundingClientRect();
+          return brand.right<controls.left && controls.right<=innerWidth;
         })()`));
         if(label==='Supply Chain Integrity' && (width===390 || width===1440) && output) {
           await evaluate("document.activeElement.blur()");
@@ -189,49 +194,51 @@ try {
       assert.ok(await evaluate("document.querySelector('.shell-integrations').innerText.includes('kind-trustmesh-network-lab')"));
       await until("!document.querySelector('.shell-integrations header button').disabled");
       await evaluate("document.querySelector('main').scrollTo({top:0,behavior:'instant'})");
-      await capture(theme,width+'-topology');
-      if(output && width===1440) {
-        for(const lab of ['policy','network']) {
-          const clip=await evaluate("document.querySelector('."+lab+"-lab').getBoundingClientRect().toJSON()");
-          const {data}=await call('Page.captureScreenshot',{format:'png',clip:{x:clip.x,y:clip.y,width:clip.width,height:clip.height,scale:2}});
-          await writeFile(join(output,theme+'-'+lab+'-closeup.png'),Buffer.from(data,'base64'));
-        }
+      await capture(theme,width+'-hub');
+      if (width===390 && output) {
+        await evaluate("document.querySelector('.hub-cloud').scrollIntoView({block:'end',behavior:'instant'})");
+        await capture(theme,width+'-cloud');
+        await evaluate("document.querySelector('main').scrollTo({top:0,behavior:'instant'})");
       }
-      const stations=await evaluate("[...document.querySelectorAll('.lab-station')].map(s=>s.id)");
-      assert.equal(stations.length,7);
-      assert.ok(await evaluate(`[...document.querySelectorAll('.lab-drawing')].every(drawing=>{
-        const deck=drawing.querySelector('.lab-deck').getBoundingClientRect();
-        return [...drawing.querySelectorAll('.lab-station')].every(b=>b.getBoundingClientRect().top>=deck.bottom-1);
-      })`),'Station labels intersect the platform drawing');
-      assert.ok(await evaluate(`[...document.querySelectorAll('.lab-drawing')].every(drawing=>{
-        const rects=[...drawing.querySelectorAll('button')].map(el=>el.getBoundingClientRect());
-        return rects.every((a,i)=>rects.slice(i+1).every(b=>a.right<=b.left || b.right<=a.left || a.bottom<=b.top || b.bottom<=a.top));
-      })`),'Technology selection controls overlap');
-      for (const station of stations) {
-        await focus('#'+station);
-        await key('Enter',13);
-        await until("document.activeElement.id==='lab-detail-title' && document.querySelector('.lab-inspector').dataset.technology==="+JSON.stringify(station.slice(8)));
-        assert.equal(await evaluate("document.querySelectorAll('.lab-station[aria-pressed=true]').length"),1);
-        assert.ok(await evaluate("document.querySelector('.lab-origin code').textContent.startsWith('/api/')"));
-        assert.ok(await evaluate("document.querySelector('.lab-check summary')!==null"),station);
-        await click('.lab-check summary');
-        assert.ok(await evaluate("document.querySelector('.lab-check[open] > code').textContent.startsWith(document.querySelector('.lab-detail-head code').textContent+' / ')"));
-        assert.ok(await evaluate("!!document.querySelector('.lab-check[open] time')"));
-        await click('.lab-check summary');
-        assert.ok(await evaluate("[...document.querySelectorAll('.lab-boundary code,.lab-inventory dt,.lab-check > code')].every(e=>!e.clientWidth || e.scrollWidth<=e.clientWidth+1)"));
-        if(station==='station-istio' && (width===390 || width===1440)) {
-          await evaluate("document.querySelector('.lab-inspector').scrollIntoView({block:'start',behavior:'instant'})");
-          await capture(theme,width+'-evidence');
-        }
-        await click('.return-station');
-        assert.equal(await evaluate('document.activeElement.id'),station);
-      }
+      assert.ok(await evaluate("[...document.querySelectorAll('img.trustmesh-mark')].every(img=>img.complete && img.naturalWidth>0 && img.currentSrc.includes('/brand/trustmesh-mark-dark-'))"));
+      assert.deepEqual(await evaluate("[...document.querySelectorAll('.hub-endpoint h3 code')].map(c=>c.textContent)"),
+        ['kind-trustmesh-lab','kind-trustmesh-network-lab']);
+      assert.ok(await evaluate("document.querySelectorAll('.hub-endpoint time').length===2"));
+      assert.deepEqual(await evaluate("[...document.querySelectorAll('.hub-cloud small')].map(e=>e.textContent)"),['NOT CONNECTED','NOT CONNECTED']);
+      assert.ok(await evaluate("[...document.querySelectorAll('.hub-cloud img')].every(img=>img.complete && img.naturalWidth>0)"));
+      assert.ok(await evaluate(`(() => {
+        const header=document.querySelector('.shell-header');
+        const surface=header.querySelector('.bridge-surface');
+        const path=surface.querySelector('path');
+        const {width,height}=surface.getBoundingClientRect();
+        const inside=(x,y)=>path.isPointInFill(new DOMPoint(x,y));
+        const left=document.querySelector('.shell-brand').getBoundingClientRect().right;
+        const right=document.querySelector('.shell-controls').getBoundingClientRect().left;
+        const middle=(left+right)/2;
+        return !header.textContent.includes('PRJ-34') &&
+          surface.getBoundingClientRect().top===0 && width===header.clientWidth &&
+          inside(left,height-2) && inside(right,height-2) &&
+          inside(middle,height-22) && !inside(middle,height-5) &&
+          getComputedStyle(path).stroke!=='none' && getComputedStyle(header).backgroundColor==='rgba(0, 0, 0, 0)' &&
+          ['::before','::after'].every(p=>getComputedStyle(header,p).content==='none') &&
+          Math.abs(document.querySelector('.shell-navigation').getBoundingClientRect().top-height)<1;
+      })()`),'The middle cut must expose the page while both ends meet the lower boundary');
+      await focus('.hub-verification');
+      await key('Enter',13);
+      await until("document.querySelector('main h1').textContent==='Security Verification'");
+      await click(button('Integrations'));
       await focus(menu);
       await key('Enter',13);
       await until("document.querySelector('.shell-popover')");
       assert.deepEqual(await evaluate("[...document.querySelectorAll('.shell-popover code')].map(el=>el.textContent)"),['kind-trustmesh-lab','kind-trustmesh-network-lab']);
       assert.ok(await evaluate("!/(AWS|Azure)/.test(document.querySelector('.shell-popover').textContent)"));
       assert.ok(await evaluate("(()=>{const r=document.querySelector('.shell-popover').getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&r.bottom<=innerHeight})()"));
+      assert.ok(await evaluate(`(() => {
+        const target=document.querySelector('.shell-popover button');
+        const r=target.getBoundingClientRect();
+        return target.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)) &&
+          getComputedStyle(document.querySelector('.shell-header')).overflow==='visible';
+      })()`),'Disclosure below the shaped surface is visible and receives pointer events');
       if(width===1440 || width===390) await capture(theme,width+'-environment');
       await key('Escape',27);
       assert.equal(await evaluate("document.activeElement.getAttribute('aria-label')"),'Local Kubernetes environment');
@@ -301,9 +308,8 @@ try {
   await click('.shell-integrations header button');
   await until("document.querySelector('.shell-integrations').innerText.includes('Cluster status API reachable')");
   await evaluate("window.qaNow=Date.now;Date.now=()=>window.qaNow()+240000");
-  await click('#station-policyNodes');
-  await until("document.querySelector('.lab-freshness').textContent.includes('Last known')");
-  await until("document.querySelector('.lab-check strong').textContent.includes('Last known')");
+  await until("[...document.querySelectorAll('.hub-time')].every(e=>e.textContent.includes('Last known'))");
+  const retained=await evaluate("[...document.querySelectorAll('.hub-endpoint dl,.hub-endpoint time')].map(el=>el.textContent)");
   await click(menu);
   await until("document.querySelector('.shell-popover').textContent.includes('Last known')");
   assert.match(await evaluate("document.querySelector('.shell-popover').innerText"),/60 seconds old/);
@@ -313,12 +319,19 @@ try {
   await until("!document.querySelector('.shell-integrations header button').disabled");
   await click('.shell-integrations header button');
   await until("document.querySelector('.shell-integrations').innerText.includes('Latest refresh failed')");
+  assert.deepEqual(await evaluate("[...document.querySelectorAll('.hub-endpoint dl,.hub-endpoint time')].map(el=>el.textContent)"),retained);
   await click(menu);
   assert.match(await evaluate("document.querySelector('.shell-popover').innerText"),/Latest refresh failed/);
   assert.ok(await evaluate("Boolean(document.querySelector('.shell-popover time'))"));
+  await click(menu);
+  await call('Network.setBlockedURLs',{urls:[]});
+  await click('.shell-integrations header button');
+  await until("document.querySelector('.hub-bar').textContent.includes('Cluster status API reachable')");
+  assert.ok(await evaluate("[...document.querySelectorAll('.hub-time strong')].every(e=>e.textContent==='Fresh snapshot')"));
+  await call('Network.setBlockedURLs',{urls:['*/api/cluster/status*']});
   await reload();
   await until("document.querySelector('button[data-module=integrations]')");
-  assert.deepEqual(await evaluate("window.fabricEvents.filter(n=>['bridge-line','shell-arrive','bridge-key-seat','fabric-boundary','seam-reveal'].includes(n))"),[]);
+  assert.deepEqual(await evaluate("window.fabricEvents.filter(n=>['bridge-line','shell-arrive','emblem-settle','fabric-boundary'].includes(n))"),[]);
   await call('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'no-preference'}]});
   assert.equal(await evaluate(morph),'none');
   await click(button('Integrations'));
@@ -327,52 +340,58 @@ try {
   assert.match(await evaluate("document.querySelector('.shell-popover').innerText"),/API unavailable/);
   assert.equal(await evaluate("!!document.querySelector('.shell-popover time')"),false);
   await click(menu);
-  for (const station of ['policyNodes','networkNodes']) {
-    await click('#station-'+station);
-    await until("document.querySelector('.lab-freshness').textContent.includes('Unavailable')");
-    assert.ok(await evaluate("!document.querySelector('.lab-inventory dl')"));
-    await until("document.querySelector('.lab-check summary')");
-  }
-  await click('#station-gatekeeper');
-  await until("document.querySelector('.lab-inventory dt')");
+  assert.ok(await evaluate("[...document.querySelectorAll('.hub-endpoint dd')].every(e=>e.textContent==='Unknown') && !document.querySelector('.hub-endpoint time')"));
   await call('Network.setBlockedURLs',{urls:[]});
   await until("!document.querySelector('.shell-integrations header button').disabled");
   await click('.shell-integrations header button');
   await until("!document.querySelector('.shell-integrations header button').disabled");
   const recovered=await evaluate("document.querySelector('.shell-integrations').innerText");
   assert.match(recovered,/Cluster status API reachable/);
-  // Alter only responses inside this browser tab to exercise mixed results and partial collectors.
+  // Exercise discovery cases using validated cluster responses confined to this test tab.
   await evaluate(`(() => {
     const original=window.fetch.bind(window);
     window.fetch=async (input,init) => {
-      const response=await original(input,init);
-      if(!response.ok || !['/api/security/network','/api/security/verification'].includes(input)) return response;
-      const data=await response.json();
-      if(input==='/api/security/network') {
-        data.peerAuthenticationsAvailable=false;
-        data.peerAuthenticationsError='PeerAuthentication inventory unavailable';
-      } else {
-        const find=id=>data.checks.find(c=>c.id===id);
-        const control=find('istio-control-plane-ready');
-        control.status='PASS';
-        control.observedAt=new Date(Date.now()-240000).toISOString();
-        find('istio-workload-strict-mtls').status='FAIL';
-        find('istio-sidecar-injection-posture').status='UNKNOWN';
-        find('gatekeeper-enforcement-action-deny').source='kind-trustmesh-network-lab / test fixture';
-      }
+      const res=await original(input,init);
+      if(input!=='/api/cluster/status') return res;
+      const data=await res.json();
+      data.collectedAt=new Date().toISOString();
+      const net={context:'kind-trustmesh-network-lab',name:'network',connected:true,nodes:[]};
+      const policy={context:'kind-trustmesh-lab',name:'policy',connected:true,nodes:[{name:'node',ready:false}]};
+      data.clusters=window.omitNetwork ? [{...policy,connected:false}] : [net,policy];
+      if(window.allReady) data.clusters=[{...policy,nodes:[{name:'control',ready:true},{name:'worker',ready:true}]},net];
       return Response.json(data);
     };
   })()`);
+  for(const [omit,expected] of [[false,['Reachable','Not ready','Reachable','Unknown']],[true,['Unreachable','Unknown','Unknown','Unknown']]]) {
+    await evaluate('window.omitNetwork='+omit);
+    await click('.shell-integrations header button');
+    await until("!document.querySelector('.shell-integrations header button').disabled");
+    assert.deepEqual(await evaluate("[...document.querySelectorAll('.hub-endpoint dd')].map(el=>el.textContent)"),expected);
+    if(omit) assert.ok(await evaluate("document.querySelectorAll('.hub-endpoint time').length===1 && document.querySelector('.hub-endpoint:last-child .hub-time').textContent==='Context not reported'"));
+  }
+  await evaluate('window.allReady=true');
   await click('.shell-integrations header button');
   await until("!document.querySelector('.shell-integrations header button').disabled");
-  assert.ok(!await evaluate("[...document.querySelectorAll('.lab-check summary')].some(e=>e.textContent.includes('Deny configuration'))"));
-  await click('#station-istio');
-  await until("document.querySelector('.lab-freshness').textContent.includes('Partial')");
-  assert.match(await evaluate("document.querySelector('.lab-evidence-columns').innerText"),/PeerAuthentication inventory unavailable/);
-  assert.ok(await evaluate("document.querySelector('.lab-inventory dt').textContent.includes('Deployment/')"));
-  assert.deepEqual(await evaluate("[...document.querySelectorAll('.lab-check strong')].map(el=>el.textContent)"),
-    ['Last known · PASS','FAIL','UNKNOWN']);
+  assert.deepEqual(await evaluate("[...document.querySelectorAll('.hub-endpoint dd')].map(el=>el.textContent)"),['Reachable','Ready','Reachable','Unknown']);
+  await call('Page.addScriptToEvaluateOnNewDocument',{source:`
+    const request=window.fetch.bind(window);
+    window.fetch=(input,init)=>input==='/api/cluster/status' ? new Promise(resolve=>{
+      window.releaseCluster=()=>resolve(request(input,init));
+    }) : request(input,init);`});
+  await reload();
+  await click(button('Integrations'));
+  await until("document.querySelector('.hub-time strong').textContent==='Loading'");
+  assert.ok(await evaluate("document.querySelector('.shell-integrations header button').disabled"));
+  await evaluate("window.releaseCluster()");
+  await until("document.querySelector('.hub-time strong').textContent==='Fresh snapshot'");
+  await evaluate(`(() => {
+    const mark = document.querySelector('.shell-brand .trustmesh-mark');
+    mark.removeAttribute('srcset');
+    mark.src = 'data:image/webp;base64,AAAA';
+  })()`);
+  await until("(() => { const img=document.querySelector('.shell-brand .trustmesh-mark'); return img.currentSrc.endsWith('/trustmesh-core.svg') && img.complete && img.naturalWidth>0; })()");
   assert.deepEqual(exceptions,[]);
+  assert.deepEqual(consoleErrors,[]);
   await reload();
   await until('window.fabricBounds.length===2');
   assert.equal(await evaluate("window.fabricEvents.filter(n=>n==='bridge-line').length"),1);

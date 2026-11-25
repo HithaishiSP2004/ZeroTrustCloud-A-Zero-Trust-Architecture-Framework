@@ -1,6 +1,7 @@
 import { DemoNotice } from './components/DemoNotice';
 import React, { useState, useEffect, useRef } from 'react';
 import { Header } from './components/Header';
+import { TrustMeshLaunch } from './components/TrustMeshLaunch';
 import { Sidebar } from './components/Sidebar';
 import { CommandCenterHero } from './components/CommandCenterHero';
 import { FindingsTable } from './components/FindingsTable';
@@ -22,6 +23,12 @@ import { ActiveModule, SecurityFinding, FindingStatus } from './types/security';
 type CommandCenterTab = 'overview' | 'findings';
 
 export const App: React.FC = () => {
+  const [launch, setLaunch] = useState<'open' | 'leaving' | 'closed'>(() => {
+    try { return sessionStorage.getItem('trustmesh.launch.entered') === '1' ? 'closed' : 'open'; }
+    catch { return 'open'; }
+  });
+  const entered = useRef(launch === 'closed');
+  const focusWorkspace = useRef(false);
   const [currentModule, setCurrentModule] = useState<ActiveModule>('command_center');
   const [commandCenterTab, setCommandCenterTab] = useState<CommandCenterTab>('overview');
   const [findings, setFindings] = useState<SecurityFinding[]>(INITIAL_DEMO_FINDINGS);
@@ -61,6 +68,31 @@ export const App: React.FC = () => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   };
 
+  function enterWorkspace() {
+    if (launch !== 'open') return;
+    try { sessionStorage.setItem('trustmesh.launch.entered', '1'); } catch { /* Document state still works. */ }
+    entered.current = true;
+    focusWorkspace.current = true;
+    navigate('command_center');
+    setLaunch(matchMedia('(prefers-reduced-motion: reduce)').matches ? 'closed' : 'leaving');
+  }
+
+  React.useLayoutEffect(() => {
+    if (!focusWorkspace.current) return;
+    focusWorkspace.current = false;
+    const heading = main.current?.querySelector('h1');
+    if (heading) { heading.tabIndex = -1; heading.focus({preventScroll:true}); }
+  }, [launch]);
+
+  useEffect(() => {
+    if (launch !== 'leaving') return;
+    const finish = () => setLaunch('closed');
+    const timer = window.setTimeout(finish, 650);
+    const media = matchMedia('(prefers-reduced-motion: reduce)');
+    media.addEventListener('change', finish);
+    return () => { clearTimeout(timer); media.removeEventListener('change', finish); };
+  }, [launch]);
+
   function navigate(module: ActiveModule) {
     setCurrentModule(module);
     if (module === 'command_center') setCommandCenterTab('overview');
@@ -97,13 +129,15 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className={`trustmesh-app-root ${theme}`}>
-      <Header collectedAt={cluster.data?.collectedAt} lastKnown={Boolean(cluster.staleReason)}
+    <>
+    {launch !== 'closed' && <TrustMeshLaunch leaving={launch === 'leaving'} onEnter={enterWorkspace}/>}
+    <div className={`trustmesh-app-root ${theme}`} style={launch === 'open' ? {display:'none'} : undefined}>
+      {entered.current && <Header collectedAt={cluster.data?.collectedAt} lastKnown={Boolean(cluster.staleReason)}
         environmentStatus={environmentStatus(cluster)} theme={theme} onToggleTheme={toggleTheme}
         onHome={() => navigate('command_center')} onIntegrations={() => {
           navigate('integrations');
           requestAnimationFrame(() => main.current?.querySelector('h1')?.focus());
-        }}/>
+        }}/>}
 
       <div className="app-body-container shell-body">
         <Sidebar currentModule={currentModule} onModuleChange={navigate} pinned={pinned}
@@ -145,7 +179,7 @@ export const App: React.FC = () => {
           ) : currentModule === 'experiments' ? (
             <SecurityObservabilityView />
           ) : (
-            <EnvironmentIntegrations cluster={cluster}/>
+            <EnvironmentIntegrations cluster={cluster} onVerification={() => navigate('experiments')}/>
           )}
         </main>
       </div>
@@ -158,8 +192,10 @@ export const App: React.FC = () => {
         onStatusChange={handleUpdateFindingStatus}
       />
 
-      <WorkspacePreferences dialog={settings} theme={theme} setTheme={setTheme} pinned={pinned} setPinned={setPinned} cluster={cluster}/>
+      <WorkspacePreferences onReplay={() => { settings.current?.close(); setLaunch('open'); }}
+        dialog={settings} theme={theme} setTheme={setTheme} pinned={pinned} setPinned={setPinned} cluster={cluster}/>
     </div>
+    </>
   );
 };
 

@@ -47,6 +47,9 @@ try {
   await call('Network.enable');
   await call('Network.setBlockedURLs',{urls:['*/api/*']});
   await call('Page.navigate',{url:site});
+  await until("!!document.querySelector('.launch-enter')");
+  await evaluate("document.querySelector('.launch-enter').click()");
+  await until("!document.querySelector('.tm-launch')");
   await until("Array.from(document.querySelectorAll('.sidebar-nav-item')).some(b=>b.innerText.includes('Supply Chain Integrity') || b.title==='Supply Chain Integrity')");
   await evaluate("Array.from(document.querySelectorAll('.sidebar-nav-item')).find(b=>b.textContent.includes('Supply Chain Integrity')).click()");
   await until("document.querySelectorAll('.si-row').length===3");

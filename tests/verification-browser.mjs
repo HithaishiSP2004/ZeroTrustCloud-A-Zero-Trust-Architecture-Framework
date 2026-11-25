@@ -74,6 +74,9 @@ async function layout() {
 try {
   await call('Runtime.enable');await call('Page.enable');await call('Network.enable');
   await call('Page.navigate',{url:site});
+  await until("!!document.querySelector('.launch-enter')");
+  await evaluate("document.querySelector('.launch-enter').click()");
+  await until("!document.querySelector('.tm-launch')");
   await navigate('Security Verification');
   await until("document.querySelectorAll('.vs-row').length>0");
   // Compare with the exact collection used by the UI. A second GET may observe different replicas.
